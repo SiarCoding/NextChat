@@ -1,0 +1,295 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  firstName     String?
+  lastName      String?
+  credits       Int       @default(100)
+  plan          Plan      @default(FREE)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  chatbots Chatbot[]
+  workflows Workflow[]
+  integrations Integration[]
+  landingPages LandingPage[]
+  fileUploads FileUpload[]
+  creditUsages CreditUsage[]
+  calendlyIntegration CalendlyIntegration? // Add this line
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Chatbot {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  
+  // Design Settings
+  primaryColor    String @default("#10b981")
+  secondaryColor  String @default("#6b7280")
+  fontFamily      String @default("Inter")
+  logo            String?
+  chatTitle       String @default("Chat Assistant")
+  welcomeMessage  String @default("Hallo! Wie kann ich Ihnen helfen?")
+  
+  // Behavior Settings
+  mode            ChatbotMode @default(CHAT)
+  language        String @default("de")
+  personality     String @default("freundlich und hilfsbereit")
+  
+  // Knowledge Base
+  websiteUrl      String?
+  knowledgeBase   String? @db.Text
+  pdfDocuments    String[] // URLs to uploaded PDFs
+  
+  // Integration Settings
+  embedCode       String?
+  
+  // Analytics
+  totalChats      Int @default(0)
+  leadsGenerated  Int @default(0)
+  
+  userId    String
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  conversations Conversation[]
+  creditUsages CreditUsage[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  chatbotId String
+  chatbot   Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  
+  // Visitor Information
+  visitorId     String?
+  visitorEmail  String?
+  visitorName   String?
+  visitorPhone  String?
+  
+  // Conversation Data
+  messages      Json[] // Array of message objects
+  isLead        Boolean @default(false)
+  leadScore     Int @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Workflow {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  
+  // Workflow Definition
+  nodes       Json[] // Array of workflow nodes
+  connections Json[] // Array of connections between nodes
+  
+  userId    String
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Integration {
+  id       String          @id @default(cuid())
+  type     IntegrationType
+  name     String
+  config   Json // Integration-specific configuration
+  isActive Boolean         @default(true)
+  
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LandingPage {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  
+  // Design Settings
+  primaryColor    String @default("#10b981")
+  secondaryColor  String @default("#6b7280")
+  fontFamily      String @default("Inter")
+  logo            String?
+  title           String @default("Live Assistant")
+  subtitle        String?
+  
+  // Assistant Settings
+  assistantName   String @default("AI Assistant")
+  assistantAvatar String?
+  welcomeMessage  String @default("Hallo! Ich bin Ihr persönlicher Assistent.")
+  voiceId         String? // ElevenLabs Voice ID
+  
+  // Page Content
+  content         Json? // Page content configuration
+  
+  // Analytics
+  totalVisitors   Int @default(0)
+  totalChats      Int @default(0)
+  
+  userId    String
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ChatbotTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  category    String
+  
+  // Template Configuration
+  mode            ChatbotMode @default(CHAT)
+  primaryColor    String @default("#10b981")
+  secondaryColor  String @default("#6b7280")
+  chatTitle       String @default("Chat Assistant")
+  welcomeMessage  String @default("Hallo! Wie kann ich Ihnen helfen?")
+  personality     String @default("freundlich und hilfsbereit")
+  systemPrompt    String @db.Text
+  
+  // Template specific settings
+  industry        String?
+  useCase         String?
+  
+  isActive        Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FileUpload {
+  id        String   @id @default(cuid())
+  filename  String
+  originalName String
+  mimeType  String
+  size      Int
+  url       String
+  
+  userId    String
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+}
+
+model CreditUsage {
+  id        String   @id @default(cuid())
+  type      CreditType
+  amount    Int
+  description String?
+  
+  userId    String
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  chatbotId String?
+  chatbot   Chatbot? @relation(fields: [chatbotId], references: [id], onDelete: SetNull)
+  
+  createdAt DateTime @default(now())
+}
+
+enum Plan {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum ChatbotMode {
+  CHAT
+  VOICE
+  HYBRID
+}
+
+enum IntegrationType {
+  HUBSPOT
+  SALESFORCE
+  PIPEDRIVE
+  CLOSE_CRM
+  ZAPIER
+  MAKE
+  GOOGLE_CALENDAR
+  MICROSOFT_CALENDAR
+  CALENDLY
+}
+
+model CalendlyIntegration {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken String @db.Text // Calendly Personal Access Token or OAuth Token
+  mcpServerUrl String? // URL of the MCP server for this integration
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum CreditType {
+  CHAT_MESSAGE
+  VOICE_MESSAGE
+  FILE_UPLOAD
+  WEBSITE_SCAN
+  BOT_CREATION
+  LANDING_PAGE_CREATION
+}
