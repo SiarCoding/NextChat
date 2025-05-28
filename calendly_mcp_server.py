@@ -1,9 +1,15 @@
 import os
-import requests
+# import requests # Wrapped in try-except below
 import json
 import asyncio
 import sys
 from mcp.server.fastmcp import FastMCP
+
+try:
+    import requests
+except ModuleNotFoundError:
+    print("CALENDLY_MCP: ERROR: The 'requests' Python module is not installed. This module is required to communicate with the Calendly API. Please install it by running: pip install requests (or /usr/local/bin/python3 -m pip install requests if you need to specify the interpreter).", file=sys.stderr, flush=True)
+    sys.exit(1)
 
 mcp = FastMCP("calendly")
 
