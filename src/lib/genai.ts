@@ -1,7 +1,7 @@
 /**
  * LLM Integration für NextChat
  * 
- * Diese Datei stellt die Verbindung zum lokalen Ollama-LLM und/oder zur Google Gemini API her
+ * Diese Datei stellt die Verbindung zu konfigurierten LLM-Services (z.B. über die localLLM-Schnittstelle oder Google Gemini API) her
  * und bietet Funktionen für die Generierung von Chatbot-Antworten
  */
 
@@ -305,7 +305,7 @@ function extractUserInfo(conversation: any[]): UserInfo {
 }
 
 /**
- * Generiert eine Antwort mit dem lokalen Ollama-LLM oder dem Gemini-Modell basierend auf einer Benutzeranfrage
+ * Generiert eine Antwort mit dem localLLM-Provider (z.B. OpenRouter) oder dem Gemini-Modell basierend auf einer Benutzeranfrage
  * 
  * @param prompt - Die Benutzeranfrage/Nachricht
  * @param context - Zusätzlicher Kontext für die Anfrage (z.B. Chatbot-Einstellungen)
@@ -506,13 +506,13 @@ Wichtig: Beziehe dich auf frühere Nachrichten und zeige, dass du dich an den Ko
 Bleibe fokussiert auf das Ziel, einen qualifizierten Lead zu erzeugen und einen Termin zu vereinbaren.
 Formuliere eine natürliche, personalisierte Antwort in 2-3 Sätzen.`;
 
-    // Verwendung des lokalen Ollama-LLM (falls aktiviert) oder Fallback auf Gemini
-    console.log(`[GenAI] Verwende ${USE_LOCAL_LLM ? 'lokales Ollama-LLM' : 'Gemini API'} für Textgenerierung`);
+    // Verwendung des localLLM-Providers (falls aktiviert) oder Fallback auf Gemini
+    console.log(`[GenAI] Verwende ${USE_LOCAL_LLM ? 'localLLM-Schnittstelle (aktuell OpenRouter)' : 'Gemini API'} für Textgenerierung`);
     
     try {
       if (USE_LOCAL_LLM) {
-        // Lokales Ollama-LLM verwenden
-        console.log('[GenAI] Sende Anfrage an lokales Ollama-LLM...');
+        // localLLM-Schnittstelle verwenden (z.B. OpenRouter)
+        console.log('[GenAI] Sende Anfrage über localLLM-Schnittstelle...');
         
         const llmOptions = {
           temperature: 0.7,
@@ -521,7 +521,7 @@ Formuliere eine natürliche, personalisierte Antwort in 2-3 Sätzen.`;
         };
         
         const llmResponse = await localLLM.generateText(fullPrompt, llmOptions);
-        console.log(`[GenAI] Antwort vom lokalen LLM erhalten: ${llmResponse.model}`);
+        console.log(`[GenAI] Antwort über localLLM-Schnittstelle erhalten: ${llmResponse.model}`);
         
         return llmResponse.text;
       } else {
